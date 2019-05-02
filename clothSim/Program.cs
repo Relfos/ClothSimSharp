@@ -1,17 +1,20 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 
-namespace SpriteViewer
+namespace LunarLabs.Cloth
 {
-
-    class MyApplication
+    class Program
     {
-        private static float totalFrames;
-        private static int startTime = 0;
+        private static int mouseX;
+        private static int mouseY;
+        private static bool[] keys = new bool[256];
+
+        private static Stopwatch timer = new Stopwatch();
 
         static int LoadImage(Bitmap image)
         {
@@ -25,21 +28,20 @@ namespace SpriteViewer
             image.UnlockBits(data);
 
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
-           
+
 
             return texID;
         }
 
         private static float GetTime()
         {
-            return Environment.TickCount / 1000.0f;
+            return timer.ElapsedMilliseconds / 1000.0f;
         }
 
         [STAThread]
         public static void Main(string[] args)
         {
             int textureID = -1;
-            string filename = args[0];
 
             var cloth = new ClothSimulation();
             cloth.AddCollider(Vector3.Zero, 5);
@@ -49,6 +51,8 @@ namespace SpriteViewer
             float curAngle = 0;
             bool mouseDown = false;
 
+            timer.Start();
+
             using (var game = new GameWindow())
             {
                 game.Load += (sender, e) =>
@@ -57,10 +61,23 @@ namespace SpriteViewer
 
                     game.VSync = VSyncMode.On;
 
-
                     textureID = LoadImage(new Bitmap(Image.FromFile("cloth.png")));
+                };
 
-                    startTime = Environment.TickCount;
+                game.KeyDown += (sender, e) =>
+                {
+                    keys[(int)e.Key] = true;
+                };
+
+                game.KeyUp += (sender, e) =>
+                {
+                    keys[(int)e.Key] = false;
+                };
+
+                game.MouseMove += (sender, e) =>
+                {
+                    mouseX = e.X;
+                    mouseY = e.Y;
                 };
 
                 game.MouseDown += (sender, e) =>
@@ -68,10 +85,10 @@ namespace SpriteViewer
                     if (e.Button == MouseButton.Left)
                     {
                         mouseDown = true;
-                    }                    
+                    }
                 };
 
-                game.MouseUp += (sender, e) => 
+                game.MouseUp += (sender, e) =>
                 {
                     if (e.Button == MouseButton.Left)
                     {
@@ -93,27 +110,27 @@ namespace SpriteViewer
 
                     if (mouseDown)
                     {
-                        curAngle = (game.Mouse.X / (float)game.Width) * MathHelper.DegreesToRadians(360);
+                        curAngle = (mouseX / (float)game.Width) * MathHelper.DegreesToRadians(360);
                     }
-                        
+
 
                     // demo controls
-                    if (game.Keyboard[Key.Escape])
+                    if (keys[(int)Key.Escape])
                     {
                         game.Exit();
                     }
 
-                    if (game.Keyboard[Key.Space])
+                    if (keys[(int)Key.Space])
                     {
                         cloth.Reset();
                     }
 
-                    if (game.Keyboard[Key.Number1])
+                    if (keys[(int)Key.Number1])
                     {
                         cloth.UnpinParticle(0);
                     }
 
-                    if (game.Keyboard[Key.Number2])
+                    if (keys[(int)Key.Number2])
                     {
                         cloth.UnpinParticle(ClothSimulation.gridSize - 1);
                     }
@@ -201,6 +218,6 @@ namespace SpriteViewer
                 game.Run(60.0);
             }
         }
-        
+
     }
 }

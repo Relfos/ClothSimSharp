@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace SpriteViewer
+namespace LunarLabs.Cloth
 {
     public struct Triangle
     {
